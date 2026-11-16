@@ -1,0 +1,1033 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dolap</title>
+<meta name="theme-color" content="#F6F3EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17150F" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dolap">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link id="manifest" rel="manifest" href="/manifest.webmanifest">
+<style>
+  :root {
+    --bg: #F6F3EE; --kart: #FFFFFF; --metin: #1F1C17; --soluk: #6E675C;
+    --cizgi: #E4DED3; --vurgu: #B5532F; --vurgu-metin: #FFFFFF; --iyi: #2F7D4F; --kotu: #B3261E; --zemin: #EFEBE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #17150F; --kart: #221F18; --metin: #F1ECE2; --soluk: #A39B8C;
+      --cizgi: #36312A; --vurgu: #E07A52; --vurgu-metin: #1A0E08; --iyi: #6FC28F; --kotu: #F2867E; --zemin: #2C2820; }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--metin);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+  }
+  main { padding: calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 92px); max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 4px 0 2px; letter-spacing: -0.02em; }
+  .alt { color: var(--soluk); margin: 0 0 20px; }
+  .kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .kart h2 { font-size: 17px; margin: 0 0 6px; }
+  .kart p { margin: 0; color: var(--soluk); }
+  .satir { display: flex; align-items: center; gap: 10px; }
+  .nokta { width: 10px; height: 10px; border-radius: 50%; background: var(--soluk); flex: none; }
+  .nokta.iyi { background: var(--iyi); } .nokta.kotu { background: var(--kotu); }
+  .bos { border-style: dashed; text-align: center; padding: 28px 16px; }
+  .bos .simge { font-size: 34px; margin-bottom: 6px; }
+  button, .dugme {
+    appearance: none; border: 0; border-radius: 12px; padding: 13px 16px; font: inherit; font-weight: 600;
+    background: var(--vurgu); color: var(--vurgu-metin); width: 100%; cursor: pointer;
+  }
+  button.ikincil { background: transparent; color: var(--metin); border: 1px solid var(--cizgi); }
+  input[type=text] {
+    width: 100%; font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--cizgi);
+    background: var(--bg); color: var(--metin); margin: 10px 0;
+  }
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around;
+    background: color-mix(in srgb, var(--kart) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--cizgi); padding: 6px 4px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  nav button {
+    background: none; color: var(--soluk); width: auto; flex: 1; padding: 6px 0; font-size: 11px; font-weight: 500;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; border-radius: 10px;
+  }
+  nav button svg { width: 24px; height: 24px; }
+  nav button[aria-current="page"] { color: var(--vurgu); }
+  .ekran { display: none; } .ekran.acik { display: block; }
+  .kucuk { font-size: 13px; color: var(--soluk); }
+  #eslesme { display: none; }
+  label.dugme { display: block; text-align: center; }
+  .dugme.ikincil { background: transparent; color: var(--metin); border: 1px solid var(--cizgi); }
+  .cipler { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 14px; padding: 0 16px; scrollbar-width: none; }
+  .cipler::-webkit-scrollbar { display: none; }
+  .cip { flex: none; width: auto; padding: 7px 13px; border-radius: 999px; font-size: 14px; font-weight: 500;
+    background: var(--kart); color: var(--metin); border: 1px solid var(--cizgi); }
+  .cip[aria-pressed="true"] { background: var(--metin); color: var(--bg); border-color: var(--metin); }
+  .izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .parca { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 14px; overflow: hidden; padding: 0;
+    text-align: left; color: var(--metin); font-weight: 400; display: block; position: relative; }
+  .parca .gorsel { aspect-ratio: 1; background: var(--zemin); display: flex; align-items: center; justify-content: center; }
+  .parca img { width: 88%; height: 88%; object-fit: contain; }
+  .parca .bilgi { padding: 8px 10px 10px; }
+  .parca .ad { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .parca .tur { font-size: 12px; color: var(--soluk); }
+  .rozet { position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px;
+    background: var(--kart); color: var(--metin); border: 1px solid var(--cizgi); }
+  .rozet.kirli { background: var(--kotu); color: #fff; border-color: transparent; }
+  .isleniyor .gorsel { position: relative; }
+  .isleniyor img { opacity: .45; }
+  .donen { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--cizgi); border-top-color: var(--vurgu);
+    animation: don 1s linear infinite; position: absolute; }
+  @keyframes don { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .donen { animation: none; } }
+  dialog { border: 0; padding: 0; width: 100%; max-width: 560px; max-height: 92vh; margin: auto auto 0; border-radius: 20px 20px 0 0;
+    background: var(--bg); color: var(--metin); }
+  dialog::backdrop { background: rgb(0 0 0 / .45); }
+  .sayfa { padding: 16px 16px calc(env(safe-area-inset-bottom) + 20px); }
+  .sayfa .buyuk { aspect-ratio: 1; background: var(--zemin); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+  .sayfa .buyuk img { width: 90%; height: 90%; object-fit: contain; }
+  .alan { margin-bottom: 12px; }
+  .alan > span { display: block; font-size: 13px; color: var(--soluk); margin-bottom: 5px; }
+  .alan input[type=text], .alan select { margin: 0; width: 100%; font: inherit; padding: 11px 13px; border-radius: 12px;
+    border: 1px solid var(--cizgi); background: var(--kart); color: var(--metin); }
+  .secmeli { display: flex; gap: 6px; flex-wrap: wrap; }
+  .secmeli .cip { padding: 8px 12px; }
+  .ikili { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tehlike { background: transparent; color: var(--kotu); border: 1px solid var(--cizgi); }
+  .rozet.sag { left: auto; right: 8px; }
+  .adla { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: start; padding: 12px 0; border-top: 1px solid var(--cizgi); }
+  .adla:first-of-type { border-top: 0; padding-top: 4px; }
+  .adla .kucukresim { width: 64px; height: 64px; border-radius: 10px; background: var(--zemin); display: flex; align-items: center; justify-content: center; padding: 0; }
+  .adla .kucukresim img { width: 88%; height: 88%; object-fit: contain; }
+  .adla input[type=text] { margin: 6px 0 0; padding: 10px 12px; }
+  .adla .cipler { margin: 8px 0 0; padding: 0; flex-wrap: wrap; overflow: visible; }
+  .adla .cip { font-size: 13px; padding: 6px 10px; }
+  .adla .ust { display: flex; gap: 8px; align-items: center; }
+  .adla .ust b { flex: 1; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .adla .ust button { width: auto; padding: 8px 14px; font-size: 14px; }
+  .ipucu { font-size: 12px; color: var(--vurgu); margin-top: 5px; }
+  .ipucu:empty { display: none; }
+  .gorunumler { display: flex; gap: 8px; overflow-x: auto; margin: -4px 0 14px; }
+  .gorunumler button { flex: none; width: 64px; height: 64px; padding: 0; border-radius: 10px; background: var(--zemin); border: 2px solid transparent; }
+  .gorunumler button[aria-pressed="true"] { border-color: var(--vurgu); }
+  .gorunumler img { width: 88%; height: 88%; object-fit: contain; }
+  .hava { display: flex; align-items: center; gap: 14px; }
+  .hava .ikon { font-size: 40px; line-height: 1; }
+  .hava .derece { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .kaydir { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px 12px; padding: 0 16px 4px; scrollbar-width: none; }
+  .kaydir::-webkit-scrollbar { display: none; }
+  .kombin { flex: none; width: 86%; scroll-snap-align: center; margin: 0; }
+  .kombin.giydim { border-color: var(--iyi); box-shadow: 0 0 0 2px var(--iyi) inset; }
+  .kolaj { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: auto; gap: 6px; background: var(--zemin); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+  .kolaj .p { display: flex; align-items: center; justify-content: center; min-width: 0; }
+  .kolaj .p img { width: 100%; height: 100%; object-fit: contain; }
+  .kolaj .ust, .kolaj .dis_giyim, .kolaj .tek_parca { height: 150px; }
+  .kolaj .alt { height: 160px; grid-column: 1 / -1; }
+  .kolaj .ayakkabi, .kolaj .aksesuar { height: 80px; }
+  .kolaj .tam { grid-column: 1 / -1; }
+  .kombin .no { font-size: 12px; color: var(--soluk); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .kombin .aciklama { font-size: 14px; color: var(--metin); margin: 0 0 12px; min-height: 40px; }
+  .tepkiler { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 8px; }
+  .tepkiler button { padding: 10px 0; font-size: 15px; background: transparent; color: var(--metin); border: 1px solid var(--cizgi); }
+  .tepkiler button[aria-pressed="true"] { background: var(--metin); color: var(--bg); border-color: var(--metin); }
+  .tepkiler button.giy[aria-pressed="true"] { background: var(--iyi); border-color: var(--iyi); color: #fff; }
+  .uyari { background: color-mix(in srgb, var(--vurgu) 12%, var(--kart)); border-color: color-mix(in srgb, var(--vurgu) 35%, var(--cizgi)); }
+  .uyari p { color: var(--metin); font-size: 14px; }
+  .uyari p + p { margin-top: 6px; }
+  button.ok { width: 40px; padding: 6px 0; font-size: 22px; background: transparent; color: var(--metin); border: 1px solid var(--cizgi); }
+  .takvim { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 12px 0 8px; }
+  .takvim .bas { font-size: 11px; color: var(--soluk); text-align: center; }
+  .takvim button { aspect-ratio: 1; padding: 2px; border-radius: 8px; background: transparent; color: var(--metin); font-size: 12px; font-weight: 500;
+    border: 1px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; overflow: hidden; }
+  .takvim button.var { background: var(--zemin); }
+  .takvim button.var img { width: 70%; height: 55%; object-fit: contain; }
+  .takvim button.bugun { border-color: var(--vurgu); }
+  .takvim button[aria-pressed="true"] { border-color: var(--metin); }
+  .gunparca { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .gunparca div { width: 60px; text-align: center; font-size: 11px; }
+  .gunparca img { width: 60px; height: 60px; object-fit: contain; background: var(--zemin); border-radius: 10px; }
+  .onayparca { display: grid; grid-template-columns: 72px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--cizgi); }
+  .onayparca .resim { width: 72px; height: 72px; border-radius: 10px; background: var(--zemin); display: flex; align-items: center; justify-content: center; }
+  .onayparca .resim img { width: 90%; height: 90%; object-fit: contain; }
+  .onayparca.cikar { opacity: .4; }
+  .onayparca input[type=text], .onayparca select { margin: 6px 0 0; padding: 9px 11px; font: inherit; font-size: 15px; width: 100%; border-radius: 10px; border: 1px solid var(--cizgi); background: var(--bg); color: var(--metin); }
+  .onayparca .ust { display: flex; align-items: center; gap: 8px; }
+  .onayparca .ust b { flex: 1; font-size: 14px; }
+  .onayparca .ust button { width: auto; padding: 6px 10px; font-size: 13px; }
+  label.anahtar { margin-top: 12px; font-size: 14px; color: var(--metin); align-items: flex-start; }
+  label.anahtar input { width: 20px; height: 20px; flex: none; margin: 0; accent-color: var(--vurgu); }
+  input[type=time] { width: 100%; font: inherit; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--cizgi); background: var(--kart); color: var(--metin); }
+  #bildirim { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 76px); max-width: 528px; margin: 0 auto;
+    background: var(--metin); color: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: 14px; z-index: 5; }
+</style>
+</head>
+<body>
+<main>
+  <!-- Eşleme: anahtar yoksa gösterilir -->
+  <section id="eslesme">
+    <h1>Dolap</h1>
+    <p class="alt">Bu cihazı sunucuna bağlaman gerekiyor.</p>
+    <div class="kart">
+      <h2>Eşleme kodu</h2>
+      <p>Safari'de Dolap'ı aç (QR ile eşlediğin yer) → <b>Ayarlar</b> → <b>Eşleme kodu al</b>. Çıkan 6 haneli kodu buraya yaz.</p>
+      <input id="anahtarGir" type="text" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="6 haneli kod (ya da uzun anahtar)">
+      <button id="anahtarKaydet">Bağlan</button>
+      <p id="eslesmeHata" class="kucuk" style="margin-top:10px"></p>
+    </div>
+  </section>
+
+  <section id="uygulama" hidden>
+    <div class="ekran acik" data-ekran="bugun">
+      <p class="alt" id="tarih" style="margin:0"></p>
+      <h1>Bugün</h1>
+      <div class="kart hava" id="havaKart"><p>Hava yükleniyor…</p></div>
+      <div class="kart" id="konumKart" hidden>
+        <h2>Hava için konum</h2>
+        <p>Kombinleri havaya göre seçmem için şehrini bilmem lazım. Konum ~1 km'ye yuvarlanıp sadece senin sunucuna kaydedilir.</p>
+        <div style="height:12px"></div>
+        <button id="konumIzin">📍 Konumumu kullan</button>
+        <p class="kucuk" style="margin-top:8px">İstemezsen Ayarlar'dan şehri elle seçebilirsin.</p>
+      </div>
+      <p class="kucuk" style="margin:4px 0 8px">Bugün nereye?</p>
+      <div class="cipler" id="ortamlar"></div>
+      <div id="eksikler"></div>
+      <div class="kaydir" id="oneriler"></div>
+      <div class="kart bos" id="oneriBos" hidden>
+        <div class="simge">👕</div>
+        <h2>Henüz kombin yok</h2>
+        <p>Önce dolabına birkaç kıyafet ekle: en az bir üst ve bir alt.</p>
+      </div>
+      <button class="ikincil" id="baskaOner" hidden>🔄 Başka öner</button>
+      <div style="height:16px"></div>
+      <div class="kart" id="gecmisKart">
+        <div class="satir" style="justify-content:space-between">
+          <button class="ok" id="ayGeri" aria-label="Önceki ay">‹</button>
+          <h2 id="ayBaslik" style="margin:0">Geçmiş</h2>
+          <button class="ok" id="ayIleri" aria-label="Sonraki ay">›</button>
+        </div>
+        <div class="takvim" id="takvim"></div>
+        <div id="gunDetay" class="kucuk"></div>
+      </div>
+      <div class="kart">
+        <div class="satir"><span class="nokta" id="sunucuNokta"></span><h2 style="margin:0">Sunucu</h2></div>
+        <p id="sunucuDurum" style="margin-top:6px">Kontrol ediliyor…</p>
+      </div>
+    </div>
+
+    <div class="ekran" data-ekran="dolap">
+      <h1>Dolap</h1>
+      <p class="alt" id="dolapOzet">Yükleniyor…</p>
+      <div id="kombinIsler"></div>
+      <div id="onaylar"></div>
+      <div class="kart satir" id="camasirKart" hidden>
+        <div style="flex:1"><h2 style="margin:0">Kirli sepeti</h2><p id="camasirYazi"></p></div>
+        <button id="yikadim" style="width:auto;padding:10px 14px">Yıkadım</button>
+      </div>
+      <div class="kart" id="isimKart" hidden>
+        <h2>İsim ver</h2>
+        <p>Her kıyafete kendi adını ver. Daha önce verdiğin bir isimle aynıysa ikisi tek kıyafet olur, yeni fotoğraf ona eklenir.</p>
+        <div id="isimListe" style="margin-top:8px"></div>
+      </div>
+      <div class="cipler" id="filtre"></div>
+      <div class="izgara" id="izgara"></div>
+      <div class="kart bos" id="dolapBos" hidden><div class="simge">🧺</div><h2>Dolabın boş</h2><p>Ekle sekmesinden ilk kıyafetinin fotoğrafını çek.</p></div>
+    </div>
+
+    <div class="ekran" data-ekran="ekle">
+      <h1>Ekle</h1>
+      <p class="alt">Fotoğraftan kıyafetlerini çıkarır; türünü ve rengini sunucu bulur.</p>
+      <div class="kart">
+        <h2>Üzerimdeki kombin</h2>
+        <p>Aynada boy fotoğrafı: üst, alt, dış giyim, ayakkabı ayrı ayrı parça olur. Baştan ayağa kadrajda ol, kollar yanda dursun.</p>
+        <div style="height:14px"></div>
+        <label class="dugme" for="kKamera">📷 Fotoğraf çek</label>
+        <input id="kKamera" type="file" accept="image/*" capture="environment" hidden>
+        <div style="height:10px"></div>
+        <label class="dugme ikincil" for="kGaleri">Galeriden seç (birden çok olur)</label>
+        <input id="kGaleri" type="file" accept="image/*" multiple hidden>
+      </div>
+      <div class="kart">
+        <h2>Tek parça</h2>
+        <p>Düz bir zemine serilmiş ya da askıdaki tek kıyafet. En temiz kesim bundan çıkar.</p>
+        <div style="height:14px"></div>
+        <label class="dugme ikincil" for="kamera">📷 Fotoğraf çek</label>
+        <input id="kamera" type="file" accept="image/*" capture="environment" hidden>
+        <div style="height:10px"></div>
+        <label class="dugme ikincil" for="galeri">Galeriden seç</label>
+        <input id="galeri" type="file" accept="image/*" multiple hidden>
+      </div>
+      <p id="yuklemeDurum" class="kucuk" hidden></p>
+    </div>
+
+    <div class="ekran" data-ekran="ayarlar">
+      <h1>Ayarlar</h1>
+      <p class="alt">Uygulama ve bağlantı bilgileri.</p>
+      <div class="kart">
+        <h2>Ana ekrana ekle</h2>
+        <p id="kurulumDurum"></p>
+      </div>
+      <div class="kart">
+        <h2>Sabah bildirimi</h2>
+        <p>Her sabah günün kombini bildirim olarak gelir. iPhone'da yalnızca ana ekrandaki Dolap'tan açılabilir.</p>
+        <label class="alan" style="margin-top:12px"><span>Saat</span><input type="time" id="saat" value="06:00"></label>
+        <label class="satir anahtar"><input type="checkbox" id="aksamUyari" checked> Akşam 20:00'de yarın yağmur ya da soğuk varsa haber ver</label>
+        <div style="height:12px"></div>
+        <button id="bildirimAc">🔔 Bildirimleri aç</button>
+        <p id="bildirimDurum" class="kucuk" style="margin-top:8px"></p>
+      </div>
+      <div class="kart">
+        <h2>Konum</h2>
+        <p id="konumYazi">—</p>
+        <div style="height:10px"></div>
+        <button class="ikincil" id="konumYenile">📍 Telefon konumunu kullan</button>
+        <input type="text" id="sehirGir" placeholder="ya da şehir yaz (ör. İzmir)" autocomplete="off">
+        <button class="ikincil" id="sehirKaydet">Şehri kaydet</button>
+      </div>
+      <div class="kart">
+        <h2>Bağlantı</h2>
+        <p>Bu cihaz eşlenmiş. Sürüm: <span id="surum">—</span></p>
+        <div style="height:12px"></div>
+        <button id="kodAl">Eşleme kodu al</button>
+        <p id="kodGoster" class="kucuk" style="margin:10px 0 0" hidden></p>
+        <div style="height:10px"></div>
+        <button class="ikincil" id="eslesmeKaldir">Bu cihazın eşlemesini kaldır</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="detay"><div class="sayfa">
+  <div class="buyuk"><img id="dGorsel" alt=""></div>
+  <div class="gorunumler" id="dGorunum" hidden></div>
+  <p id="dDurum" class="kucuk" style="margin:-4px 0 12px" hidden></p>
+  <label class="alan"><span>İsim</span><input type="text" id="dIsim" list="isimler" autocomplete="off" placeholder="ör. Gri kapüşonlum">
+    <div class="ipucu" id="dIsimIpucu"></div></label>
+  <div class="alan"><span>Görsel</span><div class="secmeli" id="dGorselSec"></div></div>
+  <label class="alan"><span>Açıklama</span><input type="text" id="dAd"></label>
+  <div class="ikili">
+    <label class="alan"><span>Tür</span><input type="text" id="dTur"></label>
+    <label class="alan"><span>Yuva</span><select id="dYuva"></select></label>
+  </div>
+  <div class="ikili">
+    <label class="alan"><span>Renkler (virgülle)</span><input type="text" id="dRenk"></label>
+    <label class="alan"><span>Desen</span><input type="text" id="dDesen"></label>
+  </div>
+  <div class="alan"><span>Kalınlık</span><div class="secmeli" id="dKalin"></div></div>
+  <div class="alan"><span>Resmiyet</span><div class="secmeli" id="dResmi"></div></div>
+  <div class="alan"><span>Mevsim</span><div class="secmeli" id="dMevsim"></div></div>
+  <div class="alan"><span>Durum</span><div class="secmeli" id="dTemiz"></div></div>
+  <button id="dKaydet">Kaydet</button>
+  <div style="height:10px"></div>
+  <div class="ikili">
+    <button class="ikincil" id="dYeniden">Yeniden işle</button>
+    <button class="tehlike" id="dSil">Sil</button>
+  </div>
+  <div style="height:10px"></div>
+  <button class="ikincil" id="dKapat">Kapat</button>
+</div></dialog>
+<datalist id="isimler"></datalist>
+<div id="bildirim" role="status" hidden></div>
+
+<nav id="sekmeler" hidden>
+  <button data-hedef="bugun" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Bugün</button>
+  <button data-hedef="dolap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 .8-2 2v.5"/><path d="M12 10.5 3 17a1 1 0 0 0 .6 1.8h16.8A1 1 0 0 0 21 17l-9-6.5"/></svg>Dolap</button>
+  <button data-hedef="ekle">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>Ekle</button>
+  <button data-hedef="ayarlar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Ayarlar</button>
+</nav>
+
+<script>
+const AK = "dolap.anahtar";
+function oku() { try { return localStorage.getItem(AK); } catch { return null; } }
+function yaz(k) { try { k ? localStorage.setItem(AK, k) : localStorage.removeItem(AK); } catch {} }
+
+async function api(yol, secenek = {}) {
+  const r = await fetch(yol, { ...secenek, headers: { ...(secenek.headers || {}), "X-Anahtar": oku() || "" } });
+  if (r.status === 401) throw new Error("anahtar");
+  if (!r.ok) throw new Error("http " + r.status);
+  return r.json();
+}
+
+function manifestiAyarla(k) {
+  document.getElementById("manifest").href = "/manifest.webmanifest" + (k ? "?k=" + encodeURIComponent(k) : "");
+}
+
+async function dene(k) {
+  const r = await fetch("/api/durum", { headers: { "X-Anahtar": k } });
+  return r.ok ? r.json() : null;
+}
+
+async function basla() {
+  // 1) Bağlantıda anahtar varsa al
+  const p = new URLSearchParams(location.search);
+  const gelen = p.get("k");
+  if (gelen) {
+    yaz(gelen);
+    // Adres çubuğunda kalsın ki iOS ana ekrana bu adresle eklesin; ama geçmişte temiz dursun diye değiştirme yok.
+  }
+  const k = oku();
+  if (!k) return eslesmeGoster();
+  manifestiAyarla(k);
+  try {
+    const d = await dene(k);
+    if (!d) { yaz(null); return eslesmeGoster("Anahtar geçersiz. Yeni eşleme bağlantısını aç."); }
+    uygulamaGoster(d);
+  } catch {
+    // Çevrimdışı: yine de uygulamayı aç
+    uygulamaGoster(null);
+  }
+}
+
+function eslesmeGoster(hata) {
+  document.getElementById("eslesme").style.display = "block";
+  document.getElementById("uygulama").hidden = true;
+  document.getElementById("sekmeler").hidden = true;
+  document.getElementById("eslesmeHata").textContent = hata || "";
+}
+
+function uygulamaGoster(d) {
+  document.getElementById("eslesme").style.display = "none";
+  document.getElementById("uygulama").hidden = false;
+  document.getElementById("sekmeler").hidden = false;
+  const nokta = document.getElementById("sunucuNokta"), yazi = document.getElementById("sunucuDurum");
+  if (d) {
+    nokta.className = "nokta iyi";
+    yazi.textContent = "Bağlı · sürüm " + d.surum;
+    document.getElementById("surum").textContent = d.surum;
+    bugunYukle(true); takvimYukle();
+    // Daha önce konum izni verildiyse her açılışta sessizce güncelle (başka şehre gidince hava doğru olsun)
+    try { if (localStorage.getItem(KONUM_IZIN) === "1") konumAl(true); } catch {}
+  } else {
+    nokta.className = "nokta kotu";
+    yazi.textContent = "Sunucuya ulaşılamadı (çevrimdışı olabilirsin).";
+  }
+  const bagimsiz = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  document.getElementById("kurulumDurum").textContent = bagimsiz
+    ? "Uygulama ana ekrandan açık. ✓"
+    : "Safari'de Paylaş düğmesi → \"Ana Ekrana Ekle\". Bildirimler yalnızca ana ekrandan açılınca çalışır.";
+}
+
+document.getElementById("anahtarKaydet").onclick = async () => {
+  const hata = document.getElementById("eslesmeHata");
+  let k = document.getElementById("anahtarGir").value.trim().replace(/\s/g, "");
+  if (!k) return;
+  hata.textContent = "";
+  if (/^\d{6}$/.test(k)) {
+    // Kısa kod → sunucudan uzun anahtarı al
+    const r = await fetch("/api/kod/kullan", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kod: k }),
+    }).catch(() => null);
+    if (!r || !r.ok) {
+      const j = r ? await r.json().catch(() => ({})) : {};
+      hata.textContent = j.detail ? "Olmadı: " + j.detail + "." : "Sunucuya ulaşılamadı.";
+      return;
+    }
+    k = (await r.json()).anahtar;
+  }
+  const d = await dene(k).catch(() => null);
+  if (!d) { hata.textContent = "Anahtar tutmadı."; return; }
+  yaz(k); manifestiAyarla(k); uygulamaGoster(d);
+};
+
+document.getElementById("kodAl").onclick = async () => {
+  const el = document.getElementById("kodGoster");
+  try {
+    const d = await api("/api/kod", { method: "POST" });
+    el.innerHTML = 'Kod: <b style="font-size:22px;letter-spacing:.15em;color:var(--metin)">' + d.kod +
+      "</b><br>" + d.sure_dk + " dakika geçerli, bir kez kullanılır. Ana ekrandaki Dolap'a yaz.";
+  } catch { el.textContent = "Kod alınamadı."; }
+  el.hidden = false;
+};
+
+document.getElementById("eslesmeKaldir").onclick = () => {
+  if (!confirm("Bu cihazın eşlemesi kaldırılsın mı?")) return;
+  yaz(null); manifestiAyarla(null); eslesmeGoster();
+};
+
+// ---------- A2: dolap ----------
+const YUVA_AD = { ust: "Üst", alt: "Alt", tek_parca: "Tek parça", dis_giyim: "Dış giyim", ayakkabi: "Ayakkabı", aksesuar: "Aksesuar" };
+const KALIN_AD = { ince: "İnce", orta: "Orta", kalin: "Kalın" };
+const RESMI_AD = { 1: "Spor", 2: "Günlük", 3: "Smart", 4: "İş", 5: "Resmi" };
+const MEVSIM_AD = { ilkbahar: "İlkbahar", yaz: "Yaz", sonbahar: "Sonbahar", kis: "Kış" };
+const TEMIZ_AD = { temiz: "Temiz", kirli: "Kirli", yikamada: "Yıkamada" };
+let parcalar = [], filtre = "hepsi", yoklama = null, acik = null;
+
+const resimAdres = (p, boy = "k") => "/resim/" + p.id + "?boy=" + boy + "&v=" + p.surum + "&k=" + encodeURIComponent(oku() || "");
+const gorunumAdres = (g, boy = "k") => "/resim/g/" + g + "?boy=" + boy + "&k=" + encodeURIComponent(oku() || "");
+// p.cizim: sunucunun çizimi etkileyen alanlardan (ve kalıp sürümünden) çıkardığı özet
+const cizimAdres = (p) => "/cizim/" + p.id + "?h=" + p.cizim + "&k=" + encodeURIComponent(oku() || "");
+// Kombinden kesilen parçalar bulanık olduğu için varsayılan çizim; tek parça fotoğrafı temiz, o foto.
+const gorselTur = (p) => p.gorsel || (p.kaynak ? "cizim" : "foto");
+const kartResmi = (p, boy = "k") => p.islem === "hazir" && gorselTur(p) === "cizim" ? cizimAdres(p) : resimAdres(p, boy);
+const gorunenAd = (p) => p.isim || p.ad || p.tur || "Parça";
+const isimAnahtar = (s) => (s || "").replace(/I/g, "ı").replace(/İ/g, "i").toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+let bildirimZaman = null;
+function bildir(yazi) {
+  const b = document.getElementById("bildirim");
+  b.textContent = yazi; b.hidden = false;
+  clearTimeout(bildirimZaman); bildirimZaman = setTimeout(() => { b.hidden = true; }, 3500);
+}
+const el = (etiket, ozellik = {}, ...cocuk) => { const e = Object.assign(document.createElement(etiket), ozellik); e.append(...cocuk); return e; };
+const bekliyor = (p) => p.islem === "sirada" || p.islem === "isleniyor";
+
+async function dolapYukle() {
+  clearTimeout(yoklama);
+  try { [parcalar, kombinIsleri] = await Promise.all([api("/api/parcalar"), api("/api/kombinler")]); }
+  catch { document.getElementById("dolapOzet").textContent = "Sunucuya ulaşılamadı."; return; }
+  dolapCiz();
+  kombinCiz();
+  onayCiz();
+  isimCiz();
+  if (parcalar.some(bekliyor) || kombinIsleri.some((k) => k.islem !== "hata")) yoklama = setTimeout(dolapYukle, 4000);
+  if (acik) {
+    const p = parcalar.find((x) => x.id === acik.id);
+    if (p && (p.islem !== acik.islem || p.surum !== acik.surum)) detayAc(p);
+  }
+}
+
+function dolapCiz() {
+  const tumu = parcalar;
+  parcalar = parcalar.filter((p) => !p.bekliyor);  // onay bekleyenler ızgarada değil, onay kartında
+  try { dolapCizIc(); } finally { parcalar = tumu; }
+  const kirli = parcalar.filter((p) => p.islem === "hazir" && !p.bekliyor && p.temizlik !== "temiz");
+  document.getElementById("camasirKart").hidden = kirli.length === 0;
+  document.getElementById("camasirYazi").textContent = kirli.length + " parça kirli: " + kirli.slice(0, 3).map(gorunenAd).join(", ") + (kirli.length > 3 ? "…" : "");
+}
+function dolapCizIc() {
+  const hazir = parcalar.filter((p) => p.islem === "hazir").length;
+  const sirada = parcalar.filter(bekliyor).length;
+  document.getElementById("dolapOzet").textContent = parcalar.length
+    ? hazir + " parça" + (sirada ? " · " + sirada + " işleniyor" : "") : "Henüz parça yok.";
+  document.getElementById("dolapBos").hidden = parcalar.length > 0;
+
+  const f = document.getElementById("filtre");
+  f.replaceChildren();
+  f.hidden = parcalar.length === 0;
+  const sayi = (y) => parcalar.filter((p) => p.islem === "hazir" && p.yuva === y).length;
+  [["hepsi", "Hepsi", parcalar.length], ...Object.entries(YUVA_AD).map(([y, a]) => [y, a, sayi(y)])]
+    .filter(([y, , n]) => y === "hepsi" || n > 0)
+    .forEach(([y, a, n]) => {
+      const b = el("button", { className: "cip", textContent: a + " " + n, onclick: () => { filtre = y; dolapCiz(); } });
+      b.setAttribute("aria-pressed", String(filtre === y));
+      f.append(b);
+    });
+
+  const iz = document.getElementById("izgara");
+  iz.replaceChildren();
+  parcalar.filter((p) => filtre === "hepsi" || p.islem !== "hazir" || p.yuva === filtre).forEach((p) => {
+    const isl = p.islem !== "hazir";
+    const gorsel = el("div", { className: "gorsel" });
+    if (p.surum > 0) gorsel.append(el("img", { src: kartResmi(p), alt: gorunenAd(p), loading: "lazy" }));
+    if (bekliyor(p)) gorsel.append(el("div", { className: "donen" }));
+    const alt = p.islem === "hata" ? "İşlenemedi, dokun"
+      : bekliyor(p) ? (p.surum > 0 ? "Etiketleniyor…" : p.sira > 1 ? "Sırada (" + p.sira + ".)" : "Arka plan siliniyor…")
+      : [p.tur, (p.renkler || []).join(", ")].filter(Boolean).join(" · ");
+    const kart = el("button", { className: "parca" + (isl ? " isleniyor" : ""), onclick: () => detayAc(p) },
+      gorsel,
+      el("div", { className: "bilgi" },
+        el("div", { className: "ad", textContent: isl ? "Yeni parça" : gorunenAd(p) }),
+        el("div", { className: "tur", textContent: alt })));
+    if (!isl && p.temizlik !== "temiz") kart.append(el("span", { className: "rozet kirli", textContent: TEMIZ_AD[p.temizlik] }));
+    if (!isl && !p.isim) kart.append(el("span", { className: "rozet sag", textContent: "İsimsiz" }));
+    else if ((p.gorunumler || []).length) kart.append(el("span", { className: "rozet sag", textContent: (p.gorunumler.length + 1) + " foto" }));
+    iz.append(kart);
+  });
+}
+
+// İsim verme: isimsiz hazır parçalar. Aynı isim = aynı kıyafet, sunucu birleştirir.
+function isimliler() { return parcalar.filter((p) => p.islem === "hazir" && p.isim && !p.bekliyor); }
+function isimIpucu(yazi, pid) {
+  const a = isimAnahtar(yazi);
+  if (!a) return "";
+  const ayni = isimliler().find((q) => q.id !== pid && isimAnahtar(q.isim) === a);
+  return ayni ? "Bu isimde bir kıyafetin var; kaydedince ikisi tek kıyafet olur." : "";
+}
+function benzerler(p) {
+  // aynı yuvadaki isimli parçalar, ortak renk ve aynı tür önce
+  return isimliler().filter((q) => q.yuva === p.yuva && q.id !== p.id).map((q) => {
+    const ortak = (q.renkler || []).filter((r) => (p.renkler || []).includes(r)).length;
+    return [q, ortak * 2 + (q.tur && q.tur === p.tur ? 1 : 0)];
+  }).filter(([, puan]) => puan > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([q]) => q);
+}
+async function isimKaydet(pid, isim) {
+  isim = isim.trim();
+  if (!isim) return null;
+  try {
+    const r = await api("/api/parca/" + pid, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isim }) });
+    bildir(r.birlesti ? "“" + r.isim + "” ile birleştirildi: artık " + (r.gorunumler.length + 1) + " fotoğrafı var." : "“" + isim + "” kaydedildi.");
+    return r;
+  } catch { alert("Kaydedilemedi."); return null; }
+}
+function isimCiz() {
+  const bekleyen = parcalar.filter((p) => p.islem === "hazir" && !p.isim && !p.bekliyor);
+  const kart = document.getElementById("isimKart"), liste = document.getElementById("isimListe");
+  kart.hidden = bekleyen.length === 0;
+  document.getElementById("isimler").replaceChildren(...isimliler().map((q) => el("option", { value: q.isim })));
+  // yazarken yoklama listeyi yeniden çizmesin
+  if (liste.contains(document.activeElement)) return;
+  liste.replaceChildren();
+  for (const p of bekleyen) {
+    const giris = el("input", { type: "text", placeholder: "İsim yaz", autocomplete: "off", enterKeyHint: "done" });
+    giris.setAttribute("list", "isimler");
+    const ipucu = el("div", { className: "ipucu" });
+    const kaydet = async () => { if (await isimKaydet(p.id, giris.value)) dolapYukle(); };
+    giris.oninput = () => { ipucu.textContent = isimIpucu(giris.value, p.id); };
+    giris.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); giris.blur(); kaydet(); } };
+    const cipler = el("div", { className: "cipler" });
+    for (const q of benzerler(p)) {
+      cipler.append(el("button", { type: "button", className: "cip", textContent: "Aynısı: " + q.isim,
+        onclick: () => { giris.value = q.isim; giris.oninput(); } }));
+    }
+    if (p.ad) cipler.append(el("button", { type: "button", className: "cip", textContent: "Öneri: " + p.ad,
+      onclick: () => { giris.value = p.ad; giris.oninput(); } }));
+    const resim = el("button", { type: "button", className: "kucukresim", onclick: () => detayAc(p) }, el("img", { src: kartResmi(p), alt: "" }));
+    resim.setAttribute("aria-label", "Ayrıntı");
+    liste.append(el("div", { className: "adla" }, resim,
+      el("div", {},
+        el("div", { className: "ust" }, el("b", { textContent: p.ad || p.tur || "Parça" }),
+          el("button", { type: "button", textContent: "Kaydet", onclick: kaydet })),
+        giris, ipucu, cipler)));
+  }
+}
+
+// Aynada kombin işleri: parçalar çıkana kadar Dolap'ın üstünde bir kart.
+let kombinIsleri = [];
+const KOMBIN_DURUM = { sirada: "Sırada", ayriliyor: "Kıyafetler ayrılıyor…", etiketleniyor: "Parçalar etiketleniyor…" };
+function kombinCiz() {
+  const k = document.getElementById("kombinIsler");
+  k.replaceChildren();
+  for (const j of kombinIsleri) {
+    const hata = j.islem === "hata";
+    const yazi = hata ? "Olmadı: " + (j.hata || "bilinmeyen hata")
+      : j.islem === "etiketleniyor" ? j.parca_sayisi + " parça bulundu, etiketleniyor… (~1 dk)"
+      : KOMBIN_DURUM[j.islem] || j.islem;
+    const kart = el("div", { className: "kart satir" },
+      hata ? el("span", { className: "nokta kotu" }) : el("div", { className: "donen", style: "position:static;flex:none" }),
+      el("div", { style: "flex:1" }, el("h2", { textContent: "Kombin fotoğrafı", style: "margin:0" }), el("p", { textContent: yazi })));
+    if (hata) kart.append(el("button", { className: "ikincil", textContent: "Kapat", style: "width:auto;padding:8px 12px",
+      onclick: async () => { await api("/api/kombin/" + j.id, { method: "DELETE" }).catch(() => {}); dolapYukle(); } }));
+    k.append(kart);
+  }
+}
+
+// Yükleme: telefonda küçült (HEIC de JPEG olur), sırayla gönder. Kombin fotoğrafında kişi
+// karenin küçük bir kısmı olabildiği için daha büyük gönderilir.
+async function kucult(dosya, enFazla = 1600) {
+  const bmp = await createImageBitmap(dosya);
+  const o = Math.min(1, enFazla / Math.max(bmp.width, bmp.height));
+  const c = el("canvas", { width: Math.round(bmp.width * o), height: Math.round(bmp.height * o) });
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  if (bmp.close) bmp.close();
+  return new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.88));
+}
+
+async function yukle(dosyalar, kombinMi) {
+  const d = document.getElementById("yuklemeDurum");
+  d.hidden = false;
+  let tamam = 0, hata = 0;
+  for (let i = 0; i < dosyalar.length; i++) {
+    d.textContent = "Gönderiliyor " + (i + 1) + "/" + dosyalar.length + "…";
+    try {
+      const blob = (await kucult(dosyalar[i], kombinMi ? 2400 : 1600).catch(() => null)) || dosyalar[i];
+      await api(kombinMi ? "/api/kombin" : "/api/parca", { method: "POST", headers: { "Content-Type": "image/jpeg" }, body: blob });
+      tamam++;
+    } catch { hata++; }
+  }
+  d.textContent = tamam + " fotoğraf gönderildi" + (hata ? ", " + hata + " gönderilemedi" : "") + ". Dolap sekmesinde işleniyor.";
+  if (tamam) sekmeAc("dolap");
+}
+for (const [id, kombinMi] of [["kKamera", true], ["kGaleri", true], ["kamera", false], ["galeri", false]]) {
+  const g = document.getElementById(id);
+  g.onchange = () => { const f = [...g.files]; g.value = ""; if (f.length) yukle(f, kombinMi); };
+}
+
+// Detay sayfası
+function secmeliKur(kap, secenek, coklu) {
+  const k = document.getElementById(kap);
+  k.replaceChildren();
+  for (const [d, a] of Object.entries(secenek)) {
+    const b = el("button", { type: "button", className: "cip", textContent: a });
+    b.dataset.d = d;
+    b.onclick = () => {
+      const simdi = b.getAttribute("aria-pressed") === "true";
+      if (!coklu) k.querySelectorAll(".cip").forEach((c) => c.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", String(coklu ? !simdi : true));
+    };
+    k.append(b);
+  }
+}
+const secileni = (kap) => [...document.querySelectorAll("#" + kap + ' .cip[aria-pressed="true"]')].map((c) => c.dataset.d);
+const isaretle = (kap, degerler) => document.querySelectorAll("#" + kap + " .cip")
+  .forEach((c) => c.setAttribute("aria-pressed", String(degerler.includes(c.dataset.d))));
+document.getElementById("dYuva").append(...Object.entries(YUVA_AD).map(([d, a]) => el("option", { value: d, textContent: a })));
+secmeliKur("dGorselSec", { cizim: "Çizim", foto: "Fotoğraf" });
+document.querySelectorAll("#dGorselSec .cip").forEach((c) => c.addEventListener("click", () => {
+  if (acik) document.getElementById("dGorsel").src = c.dataset.d === "cizim" ? cizimAdres(acik) : resimAdres(acik, acik.surum > 0 ? "b" : "o");
+}));
+document.getElementById("dIsim").oninput = (e) => {
+  document.getElementById("dIsimIpucu").textContent = acik ? isimIpucu(e.target.value, acik.id) : "";
+};
+secmeliKur("dKalin", KALIN_AD); secmeliKur("dResmi", RESMI_AD); secmeliKur("dMevsim", MEVSIM_AD, true); secmeliKur("dTemiz", TEMIZ_AD);
+
+function detayAc(p) {
+  acik = p;
+  const dlg = document.getElementById("detay");
+  document.getElementById("dGorsel").src = p.islem === "hazir" ? kartResmi(p, "b") : resimAdres(p, p.surum > 0 ? "b" : "o");
+  document.getElementById("dIsim").value = p.isim || "";
+  document.getElementById("dIsim").placeholder = p.ad ? "ör. " + p.ad : "ör. Gri kapüşonlum";
+  document.getElementById("dIsimIpucu").textContent = "";
+  isaretle("dGorselSec", [gorselTur(p)]);
+  const gk = document.getElementById("dGorunum");
+  const gler = p.gorunumler || [];
+  gk.hidden = gler.length === 0;
+  gk.replaceChildren(...[["p", resimAdres(p)], ...gler.map((g) => ["g" + g, gorunumAdres(g)])].map(([anahtar, src], i) => {
+    const b = el("button", { type: "button" }, el("img", { src, alt: "" }));
+    b.setAttribute("aria-label", "Fotoğraf " + (i + 1));
+    b.onclick = () => {
+      gk.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      document.getElementById("dGorsel").src = anahtar === "p" ? resimAdres(p, "b") : gorunumAdres(anahtar.slice(1), "b");
+    };
+    return b;
+  }));
+  const durum = document.getElementById("dDurum");
+  durum.hidden = p.islem === "hazir" && p.kesik;
+  durum.textContent = p.islem === "hata" ? "İşlenemedi: " + (p.hata || "bilinmeyen hata")
+    : p.islem !== "hazir" ? "Hâlâ işleniyor; etiketler gelince burası dolacak."
+    : "Arka plan silinemedi. Düz bir zeminde yeniden çekmek daha iyi sonuç verir.";
+  document.getElementById("dAd").value = p.ad || "";
+  document.getElementById("dTur").value = p.tur || "";
+  document.getElementById("dYuva").value = p.yuva || "ust";
+  document.getElementById("dRenk").value = (p.renkler || []).join(", ");
+  document.getElementById("dDesen").value = p.desen || "";
+  isaretle("dKalin", [p.kalinlik]); isaretle("dResmi", [String(p.resmiyet)]);
+  isaretle("dMevsim", p.mevsim || []); isaretle("dTemiz", [p.temizlik]);
+  if (!dlg.open) dlg.showModal();
+}
+const detay = document.getElementById("detay");
+function detayKapat() { acik = null; if (detay.open) detay.close(); }
+document.getElementById("dKapat").onclick = detayKapat;
+detay.addEventListener("click", (e) => { if (e.target === detay) detayKapat(); });
+detay.addEventListener("close", () => { acik = null; });
+document.getElementById("dKaydet").onclick = async () => {
+  const govde = {
+    isim: document.getElementById("dIsim").value,
+    gorsel: secileni("dGorselSec")[0],
+    ad: document.getElementById("dAd").value,
+    tur: document.getElementById("dTur").value.toLowerCase(),
+    yuva: document.getElementById("dYuva").value,
+    desen: document.getElementById("dDesen").value.toLowerCase(),
+    renkler: document.getElementById("dRenk").value.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean),
+    kalinlik: secileni("dKalin")[0], resmiyet: secileni("dResmi")[0], mevsim: secileni("dMevsim"), temizlik: secileni("dTemiz")[0],
+  };
+  try {
+    const r = await api("/api/parca/" + acik.id, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govde) });
+    if (r.birlesti) bildir("“" + r.isim + "” ile birleştirildi: artık " + (r.gorunumler.length + 1) + " fotoğrafı var.");
+    detayKapat(); dolapYukle();
+  } catch { alert("Kaydedilemedi."); }
+};
+document.getElementById("dYeniden").onclick = async () => {
+  if (!confirm("Arka plan silme ve etiketler baştan yapılsın mı? Elle düzelttiklerin gider.")) return;
+  try { await api("/api/parca/" + acik.id + "/yeniden", { method: "POST" }); detayKapat(); dolapYukle(); }
+  catch { alert("Olmadı."); }
+};
+document.getElementById("dSil").onclick = async () => {
+  if (!confirm("Bu parça dolaptan silinsin mi?")) return;
+  try { await api("/api/parca/" + acik.id, { method: "DELETE" }); detayKapat(); dolapYukle(); }
+  catch { alert("Silinemedi."); }
+};
+
+// ---------- Onay ekranı: kombin fotoğrafından çıkan parçalar ----------
+const cikarilan = new Set();
+function onayCiz() {
+  const kap = document.getElementById("onaylar");
+  if (kap.contains(document.activeElement)) return;  // yazarken yoklama yeniden çizmesin
+  const gruplar = {};
+  for (const p of parcalar.filter((p) => p.bekliyor && p.islem === "hazir")) (gruplar[p.kaynak] ||= []).push(p);
+  kap.replaceChildren();
+  for (const [kid, ps] of Object.entries(gruplar)) {
+    const satirlar = ps.map((p) => {
+      const isim = el("input", { type: "text", value: p.isim || "", placeholder: "İsim (ör. " + (p.ad || "Siyah kotum") + ")", autocomplete: "off" });
+      isim.setAttribute("list", "isimler");
+      const ipucu = el("div", { className: "ipucu" });
+      isim.oninput = () => { ipucu.textContent = isimIpucu(isim.value, p.id); };
+      const yuva = el("select", {}, ...Object.entries(YUVA_AD).map(([d, a]) => el("option", { value: d, textContent: a, selected: d === p.yuva })));
+      const satir = el("div", { className: "onayparca" + (cikarilan.has(p.id) ? " cikar" : "") });
+      const cikar = el("button", { type: "button", className: "ikincil", textContent: cikarilan.has(p.id) ? "Geri al" : "Çıkar" });
+      cikar.onclick = () => {
+        cikarilan.has(p.id) ? cikarilan.delete(p.id) : cikarilan.add(p.id);
+        satir.classList.toggle("cikar", cikarilan.has(p.id));
+        cikar.textContent = cikarilan.has(p.id) ? "Geri al" : "Çıkar";
+      };
+      // Onayda fotoğraf gösterilir: hangi parçanın kesildiği görülsün
+      satir.append(el("button", { type: "button", className: "resim", style: "padding:0", onclick: () => detayAc(p) }, el("img", { src: resimAdres(p), alt: "" })),
+        el("div", {}, el("div", { className: "ust" }, el("b", { textContent: p.ad || p.tur || "Parça" }), cikar), isim, ipucu, yuva));
+      satir._oku = () => ({ p, isim: isim.value.trim(), yuva: yuva.value });
+      return satir;
+    });
+    const giydim = el("input", { type: "checkbox" });
+    const onay = el("button", { textContent: "Dolaba ekle" });
+    onay.onclick = async () => {
+      onay.disabled = true; onay.textContent = "Ekleniyor…";
+      try {
+        const tut = [];
+        for (const s of satirlar) {
+          const { p, isim, yuva } = s._oku();
+          if (cikarilan.has(p.id)) continue;
+          const govde = {};
+          if (yuva !== p.yuva) govde.yuva = yuva;
+          if (isim && isim !== p.isim) govde.isim = isim;
+          let id = p.id;
+          if (Object.keys(govde).length) {
+            const r = await api("/api/parca/" + p.id, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govde) });
+            id = r.id;  // aynı isim: eski kıyafetle birleşti
+          }
+          tut.push(id);
+        }
+        const r = await api("/api/kombin/" + kid + "/onay", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tut, giydim: giydim.checked }) });
+        bildir(tut.length + " parça dolapta." + (r.kirlenen && r.kirlenen.length ? " Kirliye düştü: " + r.kirlenen.join(", ") : ""));
+        ps.forEach((p) => cikarilan.delete(p.id));
+        dolapYukle(); bugunYukle(true);
+      } catch { alert("Olmadı, tekrar dene."); onay.disabled = false; onay.textContent = "Dolaba ekle"; }
+    };
+    kap.append(el("div", { className: "kart uyari" },
+      el("h2", { textContent: "Fotoğraftan " + ps.length + " parça çıktı" }),
+      el("p", { textContent: "Yanlış çıkanı çıkar, türü yanlışsa yuvasını düzelt, istersen isim ver. Aynı isim = zaten dolabında olan kıyafet." }),
+      ...satirlar,
+      el("label", { className: "satir anahtar" }, giydim, "Bu kombini bugün giydim"),
+      el("div", { style: "height:12px" }), onay));
+  }
+}
+
+document.getElementById("yikadim").onclick = async () => {
+  if (!confirm("Kirli işaretli tüm parçalar temiz olsun mu?")) return;
+  try { const r = await api("/api/yikandi", { method: "POST" }); bildir(r.temizlenen + " parça temiz 🧺"); dolapYukle(); bugunYukle(true); }
+  catch { alert("Olmadı."); }
+};
+
+// ---------- Bugün: hava, ortam, 3 kombin ----------
+const ORTAM_AD = { gunluk: "Günlük", is: "İş / okul", spor: "Spor", ev: "Evde", ozel: "Özel gün" };
+const HAVA_IKON = (k) => k === 0 ? "☀️" : k <= 2 ? "🌤️" : k === 3 ? "☁️" : k <= 48 ? "🌫️" : k <= 67 || (k >= 80 && k <= 82) ? "🌧️" : k <= 86 ? "❄️" : "⛈️";
+let bugunVeri = null, bugunZaman = 0;
+
+async function bugunYukle(zorla) {
+  if (!zorla && bugunVeri && Date.now() - bugunZaman < 60000) return bugunCiz();
+  try { bugunVeri = await api("/api/bugun"); bugunZaman = Date.now(); } catch { return; }
+  bugunCiz();
+}
+
+function bugunCiz() {
+  const d = bugunVeri;
+  if (!d) return;
+  const h = d.hava, hk = document.getElementById("havaKart");
+  hk.replaceChildren();
+  if (h) {
+    hk.append(el("div", { className: "ikon", textContent: HAVA_IKON(h.kod) }),
+      el("div", {}, el("div", { className: "derece", textContent: h.en_dusuk + "° / " + h.en_yuksek + "°" }),
+        el("p", { textContent: [h.sehir, h.durum, "yağmur %" + h.yagmur, h.ruzgar >= 20 ? "rüzgar " + h.ruzgar + " km/s" : ""].filter(Boolean).join(" · ") })));
+  } else hk.append(el("p", { textContent: "Hava bilinmiyor; konum ver ki ona göre seçeyim." }));
+  document.getElementById("konumKart").hidden = !!h;
+
+  const o = document.getElementById("ortamlar");
+  o.replaceChildren(...Object.entries(ORTAM_AD).map(([k, a]) => {
+    const b = el("button", { className: "cip", textContent: a, onclick: () => yenile({ ortam: k }) });
+    b.setAttribute("aria-pressed", String((d.ortam || "gunluk") === k));
+    return b;
+  }));
+
+  const e = document.getElementById("eksikler");
+  e.replaceChildren();
+  if (d.eksik && d.eksik.length) e.append(el("div", { className: "kart uyari" }, ...d.eksik.map((m) => el("p", { textContent: "⚠️ " + m }))));
+
+  const kap = document.getElementById("oneriler");
+  kap.replaceChildren();
+  d.oneriler.forEach((k, i) => kap.append(kombinKart(k, i)));
+  document.getElementById("oneriBos").hidden = d.oneriler.length > 0;
+  document.getElementById("baskaOner").hidden = d.oneriler.length === 0;
+}
+
+function kombinKart(k, i) {
+  const kolaj = el("div", { className: "kolaj" });
+  const yuvalar = new Set(k.parcalar.map((p) => p.yuva));
+  const sira = { dis_giyim: 0, ust: 1, tek_parca: 1, alt: 2, ayakkabi: 3, aksesuar: 4 };
+  for (const p of [...k.parcalar].sort((a, b) => sira[a.yuva] - sira[b.yuva])) {
+    const tek = (p.yuva === "ust" || p.yuva === "tek_parca") && !yuvalar.has("dis_giyim")
+      || p.yuva === "dis_giyim" && !yuvalar.has("ust") && !yuvalar.has("tek_parca")
+      || p.yuva === "ayakkabi" && !yuvalar.has("aksesuar") || p.yuva === "aksesuar" && !yuvalar.has("ayakkabi");
+    kolaj.append(el("div", { className: "p " + p.yuva + (tek ? " tam" : "") }, el("img", { src: cizimAdres(p), alt: gorunenAd(p), loading: "lazy" })));
+  }
+  const dugme = (tepki, yazi, ek = "") => {
+    const b = el("button", { type: "button", className: ek, textContent: yazi, onclick: () => tepkiVer(k.id, tepki) });
+    b.setAttribute("aria-pressed", String(k.tepki === tepki));
+    b.setAttribute("aria-label", { begen: "Beğendim", begenme: "Beğenmedim", giydim: "Giydim" }[tepki]);
+    return b;
+  };
+  return el("div", { className: "kart kombin" + (k.tepki === "giydim" ? " giydim" : "") },
+    el("div", { className: "no", textContent: k.tepki === "giydim" ? "✓ Bugün giydin" : i === 0 ? "En iyi seçenek" : (i + 1) + ". seçenek" }),
+    kolaj,
+    el("p", { className: "aciklama", textContent: k.aciklama }),
+    el("div", { className: "tepkiler" }, dugme("begen", "👍"), dugme("begenme", "👎"), dugme("giydim", k.tepki === "giydim" ? "✓ Giydim" : "Giydim", "giy")));
+}
+
+async function yenile(govde) {
+  const b = document.getElementById("baskaOner");
+  b.disabled = true;
+  try {
+    bugunVeri = await api("/api/bugun", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govde) });
+    bugunZaman = Date.now();
+    bugunCiz();
+    if (bugunVeri.hepsi_goruldu) bildir("Dolabındaki tüm kombinleri gördün; yeni kıyafet ekledikçe seçenek artar.");
+    document.getElementById("oneriler").scrollTo({ left: 0, behavior: "smooth" });
+  } catch { bildir("Sunucuya ulaşılamadı."); }
+  b.disabled = false;
+}
+document.getElementById("baskaOner").onclick = () => yenile({ baska: true, ortam: bugunVeri && bugunVeri.ortam });
+
+async function tepkiVer(id, tepki) {
+  try {
+    bugunVeri = await api("/api/oneri/" + id + "/tepki", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tepki }) });
+    bugunZaman = Date.now();
+    bugunCiz();
+    const k = bugunVeri.oneriler.find((x) => x.id === id);
+    if (k && k.tepki === "giydim") { bildir("Kaydedildi, iyi günler 👋"); takvimYukle(); }
+    else if (k && k.tepki === "begenme") bildir("Not aldım, bunu daha az öneririm.");
+    else if (k && k.tepki === "begen") bildir("Not aldım 👍");
+  } catch { bildir("Kaydedilemedi."); }
+}
+
+// ---------- Konum ----------
+const KONUM_IZIN = "dolap.konum";
+function konumAl(sessiz) {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try { localStorage.setItem(KONUM_IZIN, "1"); } catch {}
+    // ~1 km'ye yuvarlanmış koordinat gönderilir
+    const lat = Math.round(pos.coords.latitude * 100) / 100, lon = Math.round(pos.coords.longitude * 100) / 100;
+    try {
+      const k = await api("/api/konum", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lat, lon }) });
+      konumYaz(k);
+      if (!sessiz) bildir("Konum: " + (k.sehir || "kaydedildi"));
+      bugunYukle(true);
+    } catch {}
+  }, () => { if (!sessiz) bildir("Konum izni verilmedi. Ayarlar'dan şehri elle seçebilirsin."); },
+  { enableHighAccuracy: false, timeout: 10000, maximumAge: 30 * 60000 });
+}
+document.getElementById("konumIzin").onclick = () => konumAl(false);
+document.getElementById("konumYenile").onclick = async () => {
+  await api("/api/konum/elle", { method: "DELETE" }).catch(() => {});
+  konumAl(false);
+};
+document.getElementById("sehirKaydet").onclick = async () => {
+  const s = document.getElementById("sehirGir").value.trim();
+  if (!s) return;
+  try {
+    const k = await api("/api/konum", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sehir: s }) });
+    konumYaz(k); bildir("Şehir: " + k.sehir); document.getElementById("sehirGir").value = ""; bugunYukle(true);
+  } catch { bildir("Şehir bulunamadı."); }
+};
+function konumYaz(k) {
+  document.getElementById("konumYazi").textContent = k && k.sehir
+    ? k.sehir + (k.elle ? " (elle seçildi; telefon konumu kullanılmıyor)" : " (telefon konumundan, uygulamayı her açışında güncellenir)")
+    : "Henüz konum yok.";
+}
+
+// ---------- Ayarlar: bildirim ----------
+async function ayarlarYukle() {
+  try {
+    const a = await api("/api/ayarlar");
+    document.getElementById("saat").value = a.saat;
+    document.getElementById("aksamUyari").checked = a.aksam_uyari;
+    konumYaz(a.konum);
+  } catch {}
+  const d = document.getElementById("bildirimDurum");
+  if (!("Notification" in window) || !("PushManager" in window)) d.textContent = "Bu tarayıcı bildirimi desteklemiyor. iPhone'da Dolap'ı ana ekrandan aç.";
+  else if (Notification.permission === "granted") d.textContent = "Bildirim izni var ✓";
+}
+async function ayarKaydet(govde) {
+  try { await api("/api/ayarlar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govde) }); bildir("Kaydedildi"); }
+  catch { bildir("Kaydedilemedi."); }
+}
+document.getElementById("saat").onchange = (e) => ayarKaydet({ saat: e.target.value });
+document.getElementById("aksamUyari").onchange = (e) => ayarKaydet({ aksam_uyari: e.target.checked });
+function b64ToU8(s) {
+  const p = "=".repeat((4 - (s.length % 4)) % 4), b = atob((s + p).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(b, (c) => c.charCodeAt(0));
+}
+document.getElementById("bildirimAc").onclick = async () => {
+  const d = document.getElementById("bildirimDurum");
+  try {
+    if (!("Notification" in window) || !("PushManager" in window)) { d.textContent = "Bildirim için Dolap'ı ana ekrandan açman lazım."; return; }
+    const izin = await Notification.requestPermission();
+    if (izin !== "granted") { d.textContent = "İzin verilmedi. iPhone Ayarlar → Bildirimler → Dolap'tan açabilirsin."; return; }
+    const reg = await navigator.serviceWorker.ready;
+    const { anahtar } = await api("/api/push/anahtar");
+    let abone = await reg.pushManager.getSubscription();
+    if (!abone) abone = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(anahtar) });
+    await api("/api/push/abone", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(abone.toJSON()) });
+    await api("/api/push/dene", { method: "POST" });
+    d.textContent = "Bildirimler açık ✅ (deneme bildirimi gönderildi)";
+  } catch (e) { d.textContent = "Olmadı: " + e.message; }
+};
+
+// ---------- Geçmiş takvimi ----------
+let takvimAy = new Date().toLocaleDateString("sv-SE").slice(0, 7), takvimVeri = null;
+const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+async function takvimYukle() {
+  try { takvimVeri = await api("/api/gecmis?ay=" + takvimAy); } catch { return; }
+  takvimCiz();
+}
+function takvimCiz() {
+  const [y, m] = takvimAy.split("-").map(Number);
+  document.getElementById("ayBaslik").textContent = AYLAR[m - 1] + " " + y;
+  const t = document.getElementById("takvim");
+  t.replaceChildren(...["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"].map((g) => el("div", { className: "bas", textContent: g })));
+  const ilk = (new Date(y, m - 1, 1).getDay() + 6) % 7, gunSay = new Date(y, m, 0).getDate();
+  for (let i = 0; i < ilk; i++) t.append(el("div"));
+  const bugunStr = new Date().toLocaleDateString("sv-SE");
+  for (let g = 1; g <= gunSay; g++) {
+    const anahtar = takvimAy + "-" + String(g).padStart(2, "0");
+    const ps = (takvimVeri && takvimVeri.gunler[anahtar]) || [];
+    const ana = ps.find((p) => p.yuva === "ust" || p.yuva === "tek_parca") || ps[0];
+    const b = el("button", { type: "button", className: (ps.length ? "var" : "") + (anahtar === bugunStr ? " bugun" : "") },
+      el("span", { textContent: g }));
+    if (ana) b.append(el("img", { src: cizimAdres(ana), alt: "" }));
+    b.onclick = () => {
+      t.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      const dd = document.getElementById("gunDetay");
+      dd.replaceChildren(ps.length ? el("div", { className: "gunparca" }, ...ps.map((p) => el("div", {}, el("img", { src: cizimAdres(p), alt: "" }), gorunenAd(p))))
+        : el("p", { textContent: g + " " + AYLAR[m - 1] + ": kayıt yok." }));
+    };
+    t.append(b);
+  }
+}
+document.getElementById("ayGeri").onclick = () => { const [y, m] = takvimAy.split("-").map(Number); const d = new Date(y, m - 2, 1); takvimAy = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); takvimYukle(); };
+document.getElementById("ayIleri").onclick = () => { const [y, m] = takvimAy.split("-").map(Number); const d = new Date(y, m, 1); takvimAy = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); takvimYukle(); };
+
+function sekmeAc(hedef) {
+  document.querySelectorAll("nav button").forEach((x) =>
+    x.dataset.hedef === hedef ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"));
+  document.querySelectorAll(".ekran").forEach((e) => e.classList.toggle("acik", e.dataset.ekran === hedef));
+  window.scrollTo(0, 0);
+  if (hedef === "dolap") dolapYukle();
+  if (hedef === "bugun") { bugunYukle(); takvimYukle(); }
+  if (hedef === "ayarlar") ayarlarYukle();
+}
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => sekmeAc(b.dataset.hedef));
+
+document.getElementById("tarih").textContent = new Date().toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+basla();
+</script>
+</body>
+</html>

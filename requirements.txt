@@ -1,0 +1,11 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+pillow==11.1.0
+qrcode[pil]==8.0
+rembg==2.0.67
+onnxruntime==1.31.1
+# CPU torch: pip install --index-url https://download.pytorch.org/whl/cpu torch
+torch==2.15.0
+transformers==5.22.2
+scipy
+scikit-image
